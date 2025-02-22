@@ -20,8 +20,24 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
         const taskCollection = client.db('task-management').collection('tasks');
+        const userCollection = client.db('task-management').collection('users');
+
+
+        // User data API
+        app.post('/users', async (req, res) => {
+          const user = req.body;
+          console.log(user);
+          // insert email if user doesnt exists:
+          const query = { email: user.email }
+          const existingUser = await userCollection.findOne(query);
+          if (existingUser) {
+              return res.send({ message: 'user already exists', insertedId: null })
+          }
+          const result = await userCollection.insertOne(user);
+          res.send(result);
+        });
 
         // Add a new task
         app.post('/tasks', async (req, res) => {
@@ -47,22 +63,20 @@ async function run() {
 
         // Update a task
         app.patch('/tasks/:id', async (req, res) => {
-            const id = req.params.id;
-            const { title, description, category } = req.body;
-            if (!title && !description && !category) {
-                return res.status(400).send({ error: 'At least one field (title, description, or category) is required.' });
-            }
-            const updateFields = {};
-            if (title) updateFields.title = title;
-            if (description) updateFields.description = description;
-            if (category) updateFields.category = category;
-
-            const result = await taskCollection.updateOne(
-                { _id: new ObjectId(id) },
-                { $set: updateFields }
-            );
-            res.send(result);
-        });
+          const id = req.params.id;
+          const { category } = req.body;
+      
+          if (!category) {
+              return res.status(400).send({ error: 'Category is required.' });
+          }
+      
+          const result = await taskCollection.updateOne(
+              { _id: new ObjectId(id) },
+              { $set: { category } }
+          );
+      
+          res.send(result);
+      });
 
         // Delete a task
         app.delete('/tasks/:id', async (req, res) => {
@@ -71,7 +85,7 @@ async function run() {
             res.send(result);
         });
 
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
