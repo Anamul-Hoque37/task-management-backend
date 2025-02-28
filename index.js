@@ -51,14 +51,34 @@ async function run() {
         });
 
         // Get all tasks grouped by category
-        app.get('/tasks', async (req, res) => {
-            const tasks = await taskCollection.find().toArray();
-            const groupedTasks = {
-                'To-Do': tasks.filter(task => task.category === 'To-Do'),
-                'In Progress': tasks.filter(task => task.category === 'In Progress'),
-                'Done': tasks.filter(task => task.category === 'Done'),
-            };
-            res.send(groupedTasks);
+        // app.get('/tasks/:email', async (req, res) => {
+        //     const email = req.params.email;
+        //     const query = { userEmail: email };
+        //     const tasks = await taskCollection.find(query).toArray();
+        //     const groupedTasks = {
+        //         'To-Do': tasks.filter(task => task.category === 'To-Do'),
+        //         'In Progress': tasks.filter(task => task.category === 'In Progress'),
+        //         'Done': tasks.filter(task => task.category === 'Done'),
+        //     };
+        //     res.send(groupedTasks);
+        // });
+
+        app.get('/tasks/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { userEmail: email };
+            try {
+                const tasks = await taskCollection.find(query).toArray();
+                const groupedTasks = {
+                    'To-Do': tasks.filter(task => task.category === 'To-Do'),
+                    'In Progress': tasks.filter(task => task.category === 'In Progress'),
+                    'Done': tasks.filter(task => task.category === 'Done'),
+                };
+                console.log('Grouped Tasks:', groupedTasks); // Debugging
+                res.send(groupedTasks);
+            } catch (error) {
+                console.error('Error fetching tasks:', error); // Debugging
+                res.status(500).send({ error: 'Internal Server Error' });
+            }
         });
 
         // Update a task
